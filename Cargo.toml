@@ -1,0 +1,8 @@
+[package]
+name = "ecdsa256"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crypto-bigint = "0.7.0-rc.10"
+subtle = "2.6"
