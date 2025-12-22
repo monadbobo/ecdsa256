@@ -1,5 +1,5 @@
-use crate::field::{Coordinate, Fe};
-use crypto_bigint::{U256, modular::ConstMontyParams};
+use crate::field::Fe;
+use crypto_bigint::{ConstChoice, U256};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Point {
@@ -56,11 +56,29 @@ impl core::ops::Add for Point {
     }
 }
 
+impl core::ops::Mul<U256> for Point {
+    type Output = Self;
+
+    fn mul(self, scalar: U256) -> Self::Output {
+        let mut result = Point { cords: None };
+        let mut addend = self;
+
+        for i in 0..256 {
+            if scalar.bit(i) == ConstChoice::TRUE {
+                result = result + addend.clone();
+            }
+            addend = addend.double();
+        }
+
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crypto_bigint::U256;
 
-    use crate::{curve::Point, field::Fe};
+    use crate::{curve::Point, field::Fe, scalar};
 
     #[test]
     fn test_point_addition() {
@@ -84,5 +102,29 @@ mod tests {
         println!("expected_y_fe: {:?}", expected_y_fe.retrieve());
         println!("cords_y: {:?}", p3.cords.as_ref().unwrap().1.retrieve());
         assert_eq!(p3.cords.unwrap().1.retrieve(), expected_y_fe.retrieve());
+    }
+
+    #[test]
+    fn test_point_scalar_mul() {
+        let scalar = U256::from_u64(1);
+        let xg =
+            U256::from_be_hex("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798");
+        let yg =
+            U256::from_be_hex("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8");
+        let g = Point {
+            cords: Some((Fe::new(&xg), Fe::new(&yg))),
+        };
+        let k = g.clone() * scalar;
+        assert_eq!(k.cords.unwrap().0.retrieve(), xg);
+        assert_eq!(k.cords.unwrap().1.retrieve(), yg);
+
+        let scalar2 = U256::from_u64(2);
+        let k2 = g * scalar2;
+        let expected_x2 =
+            U256::from_be_hex("C6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5");
+        let expected_y2 =
+            U256::from_be_hex("1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A");
+        assert_eq!(k2.cords.unwrap().0.retrieve(), expected_x2);
+        assert_eq!(k2.cords.unwrap().1.retrieve(), expected_y2);
     }
 }
