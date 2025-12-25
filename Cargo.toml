@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 crypto-bigint = "0.7.0-rc.10"
 subtle = "2.6"
+rfc6979 = "0.4.0"
+sha2 = "0.10.9"
+k256 = "0.13.4"

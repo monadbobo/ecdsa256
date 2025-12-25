@@ -1,9 +1,42 @@
 use crate::field::Fe;
 use crypto_bigint::{ConstChoice, U256};
 
+// secp256k1 生成元 G 的坐标
+pub const GX: &str = "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798";
+pub const GY: &str = "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8";
+
+// 曲线阶 n
+pub const N: &str = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141";
+
+/// 获取生成元 G
+pub fn generator() -> Point {
+    let gx = U256::from_be_hex(GX);
+    let gy = U256::from_be_hex(GY);
+    Point {
+        cords: Some((Fe::new(&gx), Fe::new(&gy))),
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Point {
     pub cords: Option<(Fe, Fe)>,
+}
+
+impl Point {
+    /// 检查点是否为无穷远点
+    pub fn is_infinity(&self) -> bool {
+        self.cords.is_none()
+    }
+
+    /// 获取 x 坐标（如果存在）
+    pub fn x(&self) -> Option<U256> {
+        self.cords.as_ref().map(|(x, _)| x.retrieve())
+    }
+
+    /// 获取 y 坐标（如果存在）
+    pub fn y(&self) -> Option<U256> {
+        self.cords.as_ref().map(|(_, y)| y.retrieve())
+    }
 }
 
 impl Point {
@@ -78,7 +111,7 @@ impl core::ops::Mul<U256> for Point {
 mod tests {
     use crypto_bigint::U256;
 
-    use crate::{curve::Point, field::Fe, scalar};
+    use crate::{curve::Point, field::Fe};
 
     #[test]
     fn test_point_addition() {

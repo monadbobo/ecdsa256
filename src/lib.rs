@@ -1,6 +1,7 @@
-mod curve;
-mod field;
-mod scalar;
+pub mod curve;
+pub mod ecdsa;
+pub mod field;
+pub mod scalar;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
